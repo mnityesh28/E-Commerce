@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Products, Contact, Orders
+from .models import Products, Contact, Orders,OrderUpdate
 from math import ceil
 # import the logging library
 import logging
@@ -69,6 +69,8 @@ def checkout(request):
         order = Orders(items_json=items_json, name=name, email=email, address=address, city=city,
                        state=state, zip_code=zip_code, phone=phone)
         order.save()
+        update=OrderUpdate(order_id=order.order_id, update_desc="The order has been placed")
+        update.save() 
         thank = True
         id = order.order_id
         return render(request, 'shop/checkout.html', {'thank':thank, 'id': id})
