@@ -1,12 +1,9 @@
 from django.shortcuts import render
 from .models import Products, Contact, Orders,OrderUpdate
 from math import ceil
+import json
 # import the logging library
-import logging
 
-# Get an instance of a logger
-logger = logging.getLogger(__name__)
-# Create your views here.
 from django.http import HttpResponse
 
 def index(request):
@@ -44,8 +41,23 @@ def contact(request):
     return render(request, 'shop/contact.html')
 
 def tracker(request):
-    return render(request, 'shop/tracker.html')
-
+    if request.method=="POST":
+        orderId=request.POST.get('orderId','')
+        email=request.POST.get('email','')
+        try:
+            order=Orders.objects.filter(order_id=orderId,email=email)
+            if len(order)>0:
+                update=OrderUpdate.objects.filter(order_id=orderId)
+                updates=[]
+                for item in update:
+                    updates.append({'text': item.update_desc, 'time':item.timestamp})
+                    response=json.dumps(updates,default=str)
+                return HttpResponse(response)
+            else:
+                return HttpResponse('{}')
+        except Exception as e:
+            return HttpResponse('{}')
+    return render(request,'shop/tracker.html')
 def search(request):
     return render(request, 'shop/search.html')
 
@@ -70,7 +82,7 @@ def checkout(request):
                        state=state, zip_code=zip_code, phone=phone)
         order.save()
         update=OrderUpdate(order_id=order.order_id, update_desc="The order has been placed")
-        update.save() 
+        update.save()
         thank = True
         id = order.order_id
         return render(request, 'shop/checkout.html', {'thank':thank, 'id': id})
